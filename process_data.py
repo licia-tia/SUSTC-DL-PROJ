@@ -23,7 +23,7 @@ class SIIM_ISIC(torch.utils.data.Dataset):
             self.imageFolder = os.path.join(data_root, 'Validation_set')
 
         self.df['sex'].fillna('unknown', inplace=True)
-        self.df['age_approx'].fillna('unknown', inplace=True)
+        self.df['age_approx'].fillna(-1, inplace=True)
         self.df['anatom_site_general_challenge'].fillna('unknown', inplace=True)
 
     def __getitem__(self, idx):
