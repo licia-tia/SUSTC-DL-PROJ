@@ -9,7 +9,7 @@ import numpy as np
 
 
 class SIIM_ISIC(torch.utils.data.Dataset):
-    def __init__(self, data_root='/home/group3/DataSet', train=True, transform=None):
+    def __init__(self, data_root='/DL/proj/DataSet', train=True, transform=None):
 
         self.data_root = data_root
         self.train = train
@@ -35,7 +35,8 @@ class SIIM_ISIC(torch.utils.data.Dataset):
             image = self.transform(image)
 
         target = self.df.iloc[idx]["target"]
-        target = torch.Tensor([1, 0]) if target == '0' else torch.Tensor([0, 1])
+        # target = torch.Tensor([1, 0]) if target == '0' else torch.Tensor([0, 1])
+        target = torch.Tensor([0]) if target == '0' else torch.Tensor([1])
 
         sex = self.df.iloc[idx]["sex"]
         age_approx = self.df.iloc[idx]["age_approx"]

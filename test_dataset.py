@@ -4,7 +4,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 import matplotlib.pyplot as plt
 
-device = 'cuda:2'
+device = 'cuda'
 
 
 def calculate_mean_std():
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         validset, batch_size=4, shuffle=True, num_workers=2)
 
     # how transform example
-    image = Image.open('/home/group3/DataSet/Training_set/img_1.jpg')
+    image = Image.open('/DL/proj/DataSet/Training_set/img_1.jpg')
     ori_img = transforms.ToTensor()(image)
     image = train_transform(image)
     plt.imshow(image.permute(1, 2, 0))
