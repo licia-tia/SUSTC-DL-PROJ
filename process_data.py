@@ -35,7 +35,6 @@ class SIIM_ISIC(torch.utils.data.Dataset):
             image = self.transform(image)
 
         target = self.df.iloc[idx]["target"]
-        target = torch.Tensor([1, 0]) if target == '0' else torch.Tensor([0, 1])
 
         sex = self.df.iloc[idx]["sex"]
         age_approx = self.df.iloc[idx]["age_approx"]
