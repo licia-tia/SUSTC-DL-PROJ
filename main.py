@@ -16,6 +16,7 @@ from models import *
 from utils import progress_bar
 from process_data import get_data_transforms, SIIM_ISIC
 
+from sklearn.metrics import roc_auc_score
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.025, type=float, help='learning rate')
@@ -80,7 +81,7 @@ parameters = filter(lambda p: p.requires_grad, net.parameters())
 optimizer = optim.SGD(parameters, lr=args.lr,
                       momentum=0.9, weight_decay=3e-4)
 
-total_epochs = 50
+total_epochs = 200
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, int(total_epochs))
 
 
@@ -98,14 +99,18 @@ def train(epoch):
         loss = criterion(outputs, targets)
         loss.backward()
         optimizer.step()
+        with torch.no_grad():
+            scores = nn.functional.softmax(outputs, dim=1)
+            positive_scores = scores[:, 1]
+            auc = roc_auc_score(targets.to('cpu'), positive_scores.to('cpu'))
 
         train_loss += loss.item()
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
 
-        progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                     % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
+        progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d) | Auc: %.3f'
+                     % (train_loss/(batch_idx+1), 100.*correct/total, correct, total, auc))
 
 
 def test(epoch):
@@ -119,6 +124,11 @@ def test(epoch):
             inputs, targets = inputs.to(device), targets.to(device)
 
             outputs = net(inputs)
+            scores = nn.functional.softmax(outputs, dim=1)
+
+            positive_scores = scores[:, 1]
+            auc = roc_auc_score(targets.to('cpu'), positive_scores.to('cpu'))
+
             loss = criterion(outputs, targets)
 
             test_loss += loss.item()
@@ -126,8 +136,8 @@ def test(epoch):
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
 
-            progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                         % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
+            progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d) | Auc: %.3f'
+                         % (test_loss/(batch_idx+1), 100.*correct/total, correct, total, auc))
 
     # Save checkpoint.
     acc = 100.*correct/total
