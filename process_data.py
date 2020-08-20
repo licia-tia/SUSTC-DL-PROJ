@@ -76,13 +76,13 @@ class Cutout(object):
 
 #todo: hair augment / microscope crop https://www.kaggle.com/nroman/melanoma-pytorch-starter-efficientnet
 
-def get_data_transforms(cutout=True, cutout_length=16):
+def get_data_transforms(cutout=True, cutout_length=16, size=224):
 
     mean = [0.7591, 0.5805, 0.5414]
     std = [0.0963, 0.1109, 0.1202]
     train_transform = transforms.Compose([
-        transforms.Resize(224),
-        transforms.RandomResizedCrop(224),
+        transforms.Resize(size),
+        transforms.RandomResizedCrop(size),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
         transforms.Normalize(mean, std)
@@ -92,8 +92,8 @@ def get_data_transforms(cutout=True, cutout_length=16):
         train_transform.transforms.append(Cutout(cutout_length))
 
     valid_transform = transforms.Compose([
-        transforms.Resize(224),
-        transforms.CenterCrop(224),
+        transforms.Resize(size),
+        transforms.CenterCrop(size),
         transforms.ToTensor(),
         transforms.Normalize(mean, std)
     ])
