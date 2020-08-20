@@ -18,37 +18,26 @@ from process_data import get_data_transforms, SIIM_ISIC
 
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
+parser.add_argument('--lr', default=0.025, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true',
                     help='resume from checkpoint')
 args = parser.parse_args()
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = 'cuda:5' if torch.cuda.is_available() else 'cpu'
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
 # Data
 print('==> Preparing data..')
 transform_train, transform_test = get_data_transforms()
-# transform_train = transforms.Compose([
-#     transforms.RandomCrop(32, padding=4),
-#     transforms.RandomHorizontalFlip(),
-#     transforms.ToTensor(),
-#     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-# ])
-
-# transform_test = transforms.Compose([
-#     transforms.ToTensor(),
-#     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-# ])
 
 trainset = SIIM_ISIC(transform=transform_train)
 trainloader = torch.utils.data.DataLoader(
-    trainset, batch_size=4, shuffle=True, num_workers=2)
+    trainset, batch_size=16, shuffle=True, num_workers=16, pin_memory=True)
 
 testset = SIIM_ISIC(train=False, transform=transform_test)
 testloader = torch.utils.data.DataLoader(
-    testset, batch_size=4, shuffle=False, num_workers=2)
+    testset, batch_size=16, shuffle=True, num_workers=16, pin_memory=True)
 
 classes = ('true', 'false')
 
@@ -66,26 +55,33 @@ print('==> Building model..')
 # net = ShuffleNetG2()
 # net = SENet18()
 # net = ShuffleNetV2(1)
-# net = EfficientNetB0()
+# net = EfficientNetB0()+
 # net = RegNetX_200MF()
-net = models.alexnet()
-net = net.to(device)
-if device == 'cuda':
-    net = torch.nn.DataParallel(net)
-    cudnn.benchmark = True
 
-if args.resume:
-    # Load checkpoint.
-    print('==> Resuming from checkpoint..')
-    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-    checkpoint = torch.load('./checkpoint/ckpt.pth')
-    net.load_state_dict(checkpoint['net'])
-    best_acc = checkpoint['acc']
-    start_epoch = checkpoint['epoch']
+net = EfficientNetB0()
+net = net.to(device)
+cudnn.benchmark = True
+# if device == 'cuda':
+#     net = torch.nn.DataParallel(net)
+#     cudnn.benchmark = True
+
+# if args.resume:
+#     # Load checkpoint.
+#     print('==> Resuming from checkpoint..')
+#     assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+#     checkpoint = torch.load('./checkpoint/ckpt.pth')
+#     net.load_state_dict(checkpoint['net'])
+#     best_acc = checkpoint['acc']
+#     start_epoch = checkpoint['epoch']
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=args.lr,
-                      momentum=0.9, weight_decay=5e-4)
+
+parameters = filter(lambda p: p.requires_grad, net.parameters())
+optimizer = optim.SGD(parameters, lr=args.lr,
+                      momentum=0.9, weight_decay=3e-4)
+
+total_epochs = 50
+scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, int(total_epochs))
 
 
 # Training
@@ -96,7 +92,7 @@ def train(epoch):
     correct = 0
     total = 0
     for batch_idx, (inputs, meta,  targets) in enumerate(trainloader):
-        inputs, targets = inputs.to(device), targets.to(device=device, dtype=torch.int64)
+        inputs, targets = inputs.to(device), targets.to(device=device)
         optimizer.zero_grad()
         outputs = net(inputs)
         targets = targets.view(1 ,-1)[0]
@@ -121,8 +117,8 @@ def test(epoch):
     total = 0
     with torch.no_grad():
         for batch_idx, (inputs, meta,  targets) in enumerate(testloader):
-            inputs, targets = inputs.to(device), targets.to(device=device, dtype=torch.int64)
-            targets = targets.view(1 ,-1)[0]
+            inputs, targets = inputs.to(device), targets.to(device)
+
             outputs = net(inputs)
             loss = criterion(outputs, targets)
 
@@ -147,8 +143,11 @@ def test(epoch):
             os.mkdir('checkpoint')
         torch.save(state, './checkpoint/ckpt.pth')
         best_acc = acc
+    print("best acc: ", best_acc)
 
 
-for epoch in range(start_epoch, start_epoch+2):
+for epoch in range(start_epoch, start_epoch+total_epochs):
+    scheduler.step()
+    print('epoch ', epoch, 'lr ', scheduler.get_lr()[0])
     train(epoch)
     test(epoch)

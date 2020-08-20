@@ -35,8 +35,6 @@ class SIIM_ISIC(torch.utils.data.Dataset):
             image = self.transform(image)
 
         target = self.df.iloc[idx]["target"]
-        # target = torch.Tensor([1, 0]) if target == '0' else torch.Tensor([0, 1])
-        target = torch.Tensor([0]) if target == '0' else torch.Tensor([1])
 
         sex = self.df.iloc[idx]["sex"]
         age_approx = self.df.iloc[idx]["age_approx"]
@@ -83,7 +81,7 @@ def get_data_transforms(cutout=True, cutout_length=16):
     mean = [0.7591, 0.5805, 0.5414]
     std = [0.0963, 0.1109, 0.1202]
     train_transform = transforms.Compose([
-        transforms.Resize(224),
+        transforms.Resize((224, 224)),
         transforms.RandomResizedCrop(224),
         transforms.RandomHorizontalFlip(),
         transforms.ToTensor(),
@@ -94,8 +92,7 @@ def get_data_transforms(cutout=True, cutout_length=16):
         train_transform.transforms.append(Cutout(cutout_length))
 
     valid_transform = transforms.Compose([
-        transforms.Resize(224),
-        transforms.CenterCrop(224),
+        transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize(mean, std)
     ])
