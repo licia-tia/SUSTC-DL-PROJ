@@ -17,13 +17,19 @@ from utils import progress_bar
 from process_data import get_data_transforms, SIIM_ISIC
 
 
+FLAG_MULTI_GPU = True
+
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
 parser.add_argument('--lr', default=0.025, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true',
                     help='resume from checkpoint')
 args = parser.parse_args()
 
-device = 'cuda:5' if torch.cuda.is_available() else 'cpu'
+if FLAG_MULTI_GPU:
+    device = 'cuda'
+else:
+    device = 'cuda:5' if torch.cuda.is_available() else 'cpu'
+
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
@@ -47,7 +53,7 @@ print('==> Building model..')
 # net = ResNet18()
 # net = PreActResNet18()
 # net = GoogLeNet()
-# net = DenseNet121()
+net = DenseNet121()
 # net = ResNeXt29_2x64d()
 # net = MobileNet()
 # net = MobileNetV2()
@@ -58,12 +64,11 @@ print('==> Building model..')
 # net = EfficientNetB0()+
 # net = RegNetX_200MF()
 
-net = EfficientNetB0()
+# net = EfficientNetB0()
 net = net.to(device)
+if FLAG_MULTI_GPU:
+    net = torch.nn.DataParallel(net)
 cudnn.benchmark = True
-# if device == 'cuda':
-#     net = torch.nn.DataParallel(net)
-#     cudnn.benchmark = True
 
 # if args.resume:
 #     # Load checkpoint.
