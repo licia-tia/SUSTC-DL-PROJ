@@ -95,6 +95,7 @@ def get_data_transforms(cutout=True, cutout_length=16):
 
     valid_transform = transforms.Compose([
         transforms.Resize(224),
+        transforms.CenterCrop(224),
         transforms.ToTensor(),
         transforms.Normalize(mean, std)
     ])
