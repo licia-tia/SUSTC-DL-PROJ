@@ -18,12 +18,12 @@ from process_data import get_data_transforms, SIIM_ISIC
 
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-parser.add_argument('--lr', default=0.25, type=float, help='learning rate')
+parser.add_argument('--lr', default=0.025, type=float, help='learning rate')
 parser.add_argument('--resume', '-r', action='store_true',
                     help='resume from checkpoint')
 args = parser.parse_args()
 
-device = 'cuda:2' if torch.cuda.is_available() else 'cpu'
+device = 'cuda:5' if torch.cuda.is_available() else 'cpu'
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
@@ -33,11 +33,11 @@ transform_train, transform_test = get_data_transforms()
 
 trainset = SIIM_ISIC(transform=transform_train)
 trainloader = torch.utils.data.DataLoader(
-    trainset, batch_size=64, shuffle=True, num_workers=2)
+    trainset, batch_size=16, shuffle=True, num_workers=16, pin_memory=True)
 
 testset = SIIM_ISIC(train=False, transform=transform_test)
 testloader = torch.utils.data.DataLoader(
-    testset, batch_size=128, shuffle=True, num_workers=2)
+    testset, batch_size=16, shuffle=True, num_workers=16, pin_memory=True)
 
 classes = ('true', 'false')
 
@@ -57,7 +57,8 @@ print('==> Building model..')
 # net = ShuffleNetV2(1)
 # net = EfficientNetB0()+
 # net = RegNetX_200MF()
-net = models.MobileNetV2(num_classes=2)
+
+net = EfficientNetB0()
 net = net.to(device)
 cudnn.benchmark = True
 # if device == 'cuda':
@@ -74,8 +75,11 @@ cudnn.benchmark = True
 #     start_epoch = checkpoint['epoch']
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=args.lr,
+
+parameters = filter(lambda p: p.requires_grad, net.parameters())
+optimizer = optim.SGD(parameters, lr=args.lr,
                       momentum=0.9, weight_decay=3e-4)
+
 total_epochs = 50
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, int(total_epochs))
 
@@ -91,7 +95,6 @@ def train(epoch):
         inputs, targets = inputs.to(device), targets.to(device=device)
         optimizer.zero_grad()
         outputs = net(inputs)
-
         loss = criterion(outputs, targets)
         loss.backward()
         optimizer.step()
@@ -139,6 +142,7 @@ def test(epoch):
             os.mkdir('checkpoint')
         torch.save(state, './checkpoint/ckpt.pth')
         best_acc = acc
+    print("best acc: ", best_acc)
 
 
 for epoch in range(start_epoch, start_epoch+total_epochs):
