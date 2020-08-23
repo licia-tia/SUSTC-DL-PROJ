@@ -1,7 +1,7 @@
 import torch.optim as optim
 from process_data import get_data_transforms, SIIM_ISIC
 import torch.backends.cudnn as cudnn
-
+from efficientnet_pytorch import EfficientNet as EffNet
 import os
 import argparse
 
@@ -11,20 +11,22 @@ from utils import progress_bar
 
 parser = argparse.ArgumentParser(description='CS324 Final')
 parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
+parser.add_argument('--resume', '-r', action='store_true',
+                    help='resume from checkpoint')
 args = parser.parse_args()
 
-device = 'cuda:6' if torch.cuda.is_available() else 'cpu'
+device = 'cuda:4' if torch.cuda.is_available() else 'cpu'
 best_acc = 0
 start_epoch = 0
 
 # Data
 print('==> Preparing data..')
-transform_train, transform_test = get_data_transforms(size=224)
+transform_train, transform_test = get_data_transforms(size=456)
 
 trainset = SIIM_ISIC(transform=transform_train)
 trainloader = torch.utils.data.DataLoader(
         trainset,
-        batch_size=16,
+        batch_size=4,
         num_workers=16,
         shuffle=True,
         pin_memory=True
@@ -33,7 +35,7 @@ trainloader = torch.utils.data.DataLoader(
 testset = SIIM_ISIC(train=False, transform=transform_test)
 testloader = torch.utils.data.DataLoader(
         testset,
-        batch_size=16,
+        batch_size=4,
         num_workers=16,
         shuffle=False,
         pin_memory=True
@@ -41,9 +43,21 @@ testloader = torch.utils.data.DataLoader(
 
 # Model
 print('==> Building model..')
-net = EfficientNetB0()
+# net = EfficientNetB0()
+net = EffNet.from_pretrained('efficientnet-b5')
 net = net.to(device)
 cudnn.benchmark = True
+
+if args.resume:
+    # Load checkpoint.
+    print('==> Resuming from checkpoint..')
+    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+    checkpoint = torch.load('./checkpoint/ckpt.pth')
+    net.load_state_dict(checkpoint['net'])
+    best_acc = checkpoint['acc']
+    start_epoch = checkpoint['epoch']
+    print(best_acc)
+    exit()
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=args.lr,
@@ -108,6 +122,6 @@ def test(epoch):
         best_acc = acc
 
 
-for epoch in range(start_epoch, start_epoch+200):
+for epoch in range(start_epoch, start_epoch+2000):
     train(epoch)
     test(epoch)
