@@ -39,11 +39,11 @@ transform_train, transform_test = get_data_transforms()
 
 trainset = SIIM_ISIC(transform=transform_train)
 trainloader = torch.utils.data.DataLoader(
-    trainset, batch_size=16, shuffle=True, num_workers=16, pin_memory=True)
+    trainset, batch_size=4, shuffle=True, num_workers=16, pin_memory=True)
 
 testset = SIIM_ISIC(train=False, transform=transform_test)
 testloader = torch.utils.data.DataLoader(
-    testset, batch_size=16, shuffle=True, num_workers=16, pin_memory=True)
+    testset, batch_size=4, shuffle=True, num_workers=16, pin_memory=True)
 
 classes = ('true', 'false')
 
@@ -53,7 +53,7 @@ print('==> Building model..')
 # net = ResNet18()
 # net = PreActResNet18()
 # net = GoogLeNet()
-net = DenseNet121()
+net = DenseNet201()
 # net = ResNeXt29_2x64d()
 # net = MobileNet()
 # net = MobileNetV2()
@@ -85,7 +85,7 @@ parameters = filter(lambda p: p.requires_grad, net.parameters())
 optimizer = optim.SGD(parameters, lr=args.lr,
                       momentum=0.9, weight_decay=3e-4)
 
-total_epochs = 50
+total_epochs = 100
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, int(total_epochs))
 
 
