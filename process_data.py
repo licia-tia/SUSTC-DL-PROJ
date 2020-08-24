@@ -47,9 +47,6 @@ class SIIM_ISIC(torch.utils.data.Dataset):
             "age_approx": age_approx,
             "anatom_site_general_challenge": anatom_site_general_challenge,
         }
-        # return {"image": image,
-        #         "meta": meta,
-        #         "target": target}
         return image, meta, target
 
     def __len__(self):

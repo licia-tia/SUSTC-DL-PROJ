@@ -1,10 +1,8 @@
 import torch.optim as optim
 from process_data import get_data_transforms, SIIM_ISIC
 import torch.backends.cudnn as cudnn
-from efficientnet_pytorch import EfficientNet as EffNet
 import os
 import argparse
-
 from models import *
 from utils import progress_bar
 
@@ -44,7 +42,6 @@ testloader = torch.utils.data.DataLoader(
 # Model
 print('==> Building model..')
 net = EfficientNetB0()
-# net = EffNet.from_pretrained('efficientnet-b5')
 net = net.to(device)
 cudnn.benchmark = True
 
@@ -52,12 +49,10 @@ if args.resume:
     # Load checkpoint.
     print('==> Resuming from checkpoint..')
     assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-    checkpoint = torch.load('./checkpoint/ckpt.pth')
+    checkpoint = torch.load('./checkpoint/effnet-b0.pth')
     net.load_state_dict(checkpoint['net'])
     best_acc = checkpoint['acc']
     start_epoch = checkpoint['epoch']
-    print(best_acc)
-    exit()
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)

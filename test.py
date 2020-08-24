@@ -3,6 +3,31 @@ import os
 import torch
 from models import *
 from process_data import get_data_transforms, SIIM_ISIC
+from utils import progress_bar
+
+device = 'cuda:3' if torch.cuda.is_available() else 'cpu'
+criterion = nn.CrossEntropyLoss()
+
+
+def test(net):
+    net.eval()
+    test_loss = 0
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for batch_idx, (inputs, meta, targets) in enumerate(testloader):
+            inputs, targets = inputs.to(device), targets.to(device=device, dtype=torch.int64)
+            outputs = net(inputs)
+            loss = criterion(outputs, targets)
+
+            test_loss += loss.item()
+            _, predicted = outputs.max(1)
+            total += targets.size(0)
+            correct += predicted.eq(targets).sum().item()
+
+            progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                         % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='CS324 Final')
@@ -21,22 +46,11 @@ if __name__ == '__main__':
     print('Load effnet-b0 with acc =', checkpoint['acc'])
 
     # densenet
-    net = DenseNet()
-    checkpoint = torch.load('./checkpoint/effnet-b0.pth')
-    net.load_state_dict(checkpoint['net'])
-    ensemble_model.append(net)
-    print('Load effnet-b0 with acc =', checkpoint['acc'])
-
-
-    files = os.listdir('./checkpoint')
-    for file in files:
-        net = torch.nn.Module()
-        checkpoint = torch.load('./checkpoint/' + file)
-        net.load_state_dict(checkpoint['net'])
-        ensemble_model.append(net)
-        print(file)
-        print('Acc: ' + checkpoint['acc'])
-        print()
+    # net = DenseNet201()
+    # checkpoint = torch.load('./checkpoint/denseNet.pth')
+    # net.load_state_dict(checkpoint['net'])
+    # ensemble_model.append(net)
+    # print('Load denseNet with acc =', checkpoint['acc'])
 
     transform_train, transform_test = get_data_transforms(size=224)
     testset = SIIM_ISIC(type='validate', transform=transform_test)
@@ -47,6 +61,5 @@ if __name__ == '__main__':
         shuffle=False,
         pin_memory=True
     )
-
-
-
+    for net in ensemble_model:
+        test(net)
