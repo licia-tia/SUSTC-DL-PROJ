@@ -5,7 +5,7 @@ from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve, auc
 import torch.nn as nn
 
-from models import EfficientNetB0
+from models import *
 from process_data import SIIM_ISIC, get_data_transforms
 
 import matplotlib.pyplot as plt
@@ -33,11 +33,11 @@ if __name__ == '__main__':
     print('Load effnet-b0-2 with acc =', checkpoint['acc'])
 
     # cnn
-    # net = Net(3, meta_dim=8)
-    # checkpoint = torch.load('./checkpoint/cnn.pth', map_location='cpu')
-    # net.load_state_dict(checkpoint['net'])
-    # ensemble_model['cnn'] = net
-    # print('Load cnn with acc =', checkpoint['acc'])
+    net = Net(3, meta_dim=8)
+    checkpoint = torch.load('./checkpoint/cnn.pth', map_location='cpu')
+    net.load_state_dict(checkpoint['net'])
+    ensemble_model['cnn'] = net
+    print('Load cnn with acc =', checkpoint['acc'])
 
     # densenet
     # net = DenseNet201()
