@@ -34,7 +34,6 @@ if __name__ == '__main__':
     ensemble_model['eff1'] = net
     print('Load effnet-b0 with acc =', checkpoint['acc'])
 
-
     # effnet-2
     net = EfficientNetB0()
     checkpoint = torch.load('./checkpoint/effnet-b0-2.pth', map_location='cpu')
@@ -43,15 +42,15 @@ if __name__ == '__main__':
     print('Load effnet-b0-2 with acc =', checkpoint['acc'])
 
     # cnn
-    # net = Net(3, meta_dim=8)
-    # checkpoint = torch.load('./checkpoint/cnn.pth', map_location='cpu')
-    # net.load_state_dict(checkpoint['net'])
-    # ensemble_model['cnn'] = net
-    # print('Load cnn with acc =', checkpoint['acc'])
+    net = Net(3, meta_dim=8)
+    checkpoint = torch.load('./checkpoint/cnn.pth', map_location='cpu')
+    net.load_state_dict(checkpoint['net'])
+    ensemble_model['cnn'] = net
+    print('Load cnn with acc =', checkpoint['acc'])
 
     # densenet
     # net = DenseNet201()
-    # checkpoint = torch.load('./checkpoint/denseNet.pth')
+    # checkpoint = torch.load('./checkpoint/denseNet.pth', map_location='cpu')
     # net.load_state_dict(checkpoint['net'])
     # ensemble_model['dense'] = net
     # print('Load denseNet with acc =', checkpoint['acc'])
@@ -61,11 +60,14 @@ if __name__ == '__main__':
                         img_folder=args.img_folder, transform=transform_test)
     testloader = torch.utils.data.DataLoader(
         testset,
-        batch_size=1,
+        # batch_size=1,
+        batch_size=4,
         num_workers=4,
         shuffle=False,
         pin_memory=True
     )
+
+    misclassified = []
 
     device = 'cpu'
     test_loss = 0
@@ -111,8 +113,10 @@ if __name__ == '__main__':
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
 
-            if predicted.eq(targets).sum().item() == 0:
-                print('One misclassified sample: ' + str(batch_idx))
+            # if predicted.eq(targets).sum().item() == 0:
+            #     misclassified.append(batch_idx)
 
             progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                          % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+
+    print(misclassified)

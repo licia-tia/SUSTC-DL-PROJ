@@ -10,6 +10,9 @@ from process_data import SIIM_ISIC, get_data_transforms
 
 import matplotlib.pyplot as plt
 #device = 'cuda:2'
+sex = {'female': 1, 'male': -1, 'unknown': 0}
+anatom = {'palms/soles': [1, 0, 0, 0, 0, 0], 'lower extremity': [0, 1, 0, 0, 0, 0], 'upper extremity': [0, 0, 1, 0, 0, 0],
+          'torso': [0, 0, 0, 4, 0, 0], 'oral/genital': [0, 0, 0, 0, 1, 0], 'head/neck': [0, 0, 0, 0, 0, 1],  'unknown': [0, 0, 0, 0, 0, 0]}
 
 if __name__ == '__main__':
     assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
@@ -102,8 +105,35 @@ if __name__ == '__main__':
 
     with torch.no_grad():
         for batch_idx, (inputs, meta, targets) in enumerate(testloader):
-            # inputs, targets = inputs.to(device), targets.to(device)
-            outputs = net(inputs)
+            if net == 'cnn':
+                net = ensemble_model[net]
+                net.eval()
+                for s in range(len(meta['sex'])):
+                    meta['sex'][s] = sex[meta['sex'][s]]
+                meta['sex'] = torch.tensor(meta['sex']).unsqueeze(0)
+                meta['sex'] = torch.transpose(meta['sex'], 0, 1)
+                meta['age_approx'] = torch.tensor(meta['age_approx']).unsqueeze(0)
+                meta['age_approx'] = torch.transpose(meta['age_approx'], 0, 1)
+                for a in range(len(meta['anatom_site_general_challenge'])):
+                    meta['anatom_site_general_challenge'][a] = anatom[
+                        meta['anatom_site_general_challenge'][a]]
+                meta['anatom_site_general_challenge'] = torch.tensor(meta['anatom_site_general_challenge'])
+                # pdb.set_trace()
+                meta = torch.cat((meta['sex'], meta['age_approx'], meta['anatom_site_general_challenge']),
+                                 1)
+                meta = meta.to('cpu')
+                if outputs is None:
+                    outputs = net(inputs, meta)
+                else:
+                    outputs += net(inputs, meta)
+            else:
+                net = ensemble_model[net]
+                net.eval()
+                sm = nn.Softmax(dim=1)
+                if outputs is None:
+                    outputs = sm(net(inputs))
+                else:
+                    outputs += sm(net(inputs))
             scores = nn.functional.softmax(outputs, dim=1)
 
             positive_scores = scores[:, 1]
@@ -132,4 +162,4 @@ if __name__ == '__main__':
     # plt.show()
     if not os.path.exists('./roc_auc'):
         os.mkdir('./roc_auc')
-    plt.savefig('./roc_auc/' + net)
+    plt.savefig('./roc_auc/ensemble')
