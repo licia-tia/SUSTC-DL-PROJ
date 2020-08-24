@@ -15,13 +15,13 @@ parser.add_argument('--resume', '-r', action='store_true',
                     help='resume from checkpoint')
 args = parser.parse_args()
 
-device = 'cuda:4' if torch.cuda.is_available() else 'cpu'
+device = 'cuda:3' if torch.cuda.is_available() else 'cpu'
 best_acc = 0
 start_epoch = 0
 
 # Data
 print('==> Preparing data..')
-transform_train, transform_test = get_data_transforms(size=456)
+transform_train, transform_test = get_data_transforms(size=224)
 
 trainset = SIIM_ISIC(transform=transform_train)
 trainloader = torch.utils.data.DataLoader(
@@ -43,8 +43,8 @@ testloader = torch.utils.data.DataLoader(
 
 # Model
 print('==> Building model..')
-# net = EfficientNetB0()
-net = EffNet.from_pretrained('efficientnet-b5')
+net = EfficientNetB0()
+# net = EffNet.from_pretrained('efficientnet-b5')
 net = net.to(device)
 cudnn.benchmark = True
 
@@ -122,6 +122,6 @@ def test(epoch):
         best_acc = acc
 
 
-for epoch in range(start_epoch, start_epoch+2000):
+for epoch in range(start_epoch, start_epoch+500):
     train(epoch)
     test(epoch)
