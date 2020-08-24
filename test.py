@@ -27,13 +27,21 @@ if __name__ == '__main__':
     net = net.to(device)
     checkpoint = torch.load('./checkpoint/effnet-b0.pth')
     net.load_state_dict(checkpoint['net'])
-    ensemble_model.append(net)
     print('Load effnet-b0 with acc =', checkpoint['acc'])
+    del net, checkpoint
+    torch.cuda.empty_cache()
+
+    # effnet-2
+    net = EfficientNetB0()
+    net = net.to(device)
+    checkpoint = torch.load('./checkpoint/effnet-b0-2.pth')
+    net.load_state_dict(checkpoint['net'])
+    print('Load effnet-b0-2 with acc =', checkpoint['acc'])
 
     # densenet
     # net = DenseNet201()
     # net = net.to(device)
-    # checkpoint = torch.load('./checkpoint/denseNet.pth')
+    # checkpoint = torch.load('./checkpoint/denseNet2.pth')
     # net.load_state_dict(checkpoint['net'])
     # ensemble_model.append(net)
     # print('Load denseNet with acc =', checkpoint['acc'])
@@ -43,12 +51,13 @@ if __name__ == '__main__':
                         img_folder=args.img_folder, transform=transform_test)
     testloader = torch.utils.data.DataLoader(
         testset,
-        batch_size=4,
-        num_workers=16,
+        batch_size=1,
+        num_workers=4,
         shuffle=False,
         pin_memory=True
     )
     for net in ensemble_model:
+        print('Single net:')
         net.eval()
         test_loss = 0
         correct = 0
