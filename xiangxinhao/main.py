@@ -24,7 +24,7 @@ parser.add_argument('--resume', '-r', action='store_true',
                     help='resume from checkpoint')
 args = parser.parse_args()
 
-device = 'cuda:4' if torch.cuda.is_available() else 'cpu'
+device = 'cuda:3' if torch.cuda.is_available() else 'cpu'
 best_acc = 0  # best test accuracy
 start_epoch = 0  # start from epoch 0 or last checkpoint epoch
 
@@ -34,17 +34,18 @@ transform_train, transform_test = get_data_transforms()
 
 trainset = SIIM_ISIC(transform=transform_train)
 trainloader = torch.utils.data.DataLoader(
-    trainset, batch_size=16, shuffle=True, num_workers=16, pin_memory=True)
+    trainset, batch_size=8, shuffle=True, num_workers=8, pin_memory=True)
+
 
 testset = SIIM_ISIC(train=False, transform=transform_test)
 testloader = torch.utils.data.DataLoader(
-    testset, batch_size=16, shuffle=True, num_workers=16, pin_memory=True)
+    testset, batch_size=8, shuffle=True, num_workers=8, pin_memory=True)
 
 classes = ('true', 'false')
 
 # Model
 print('==> Building model..')
-# net = VGG('VGG16')
+# net = VGG('VGG19')
 # net = ResNet18()
 # net = PreActResNet18()
 net = GoogLeNet()
@@ -81,7 +82,7 @@ parameters = filter(lambda p: p.requires_grad, net.parameters())
 optimizer = optim.SGD(parameters, lr=args.lr,
                       momentum=0.9, weight_decay=3e-4)
 
-total_epochs = 100
+total_epochs = 200
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, int(total_epochs))
 
 
