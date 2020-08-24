@@ -32,7 +32,7 @@ trainloader = torch.utils.data.DataLoader(
         pin_memory=True
     )
 
-testset = SIIM_ISIC(train=False, transform=transform_test)
+testset = SIIM_ISIC(type='validate', transform=transform_test)
 testloader = torch.utils.data.DataLoader(
         testset,
         batch_size=4,
@@ -60,8 +60,7 @@ if args.resume:
     exit()
 
 criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=args.lr,
-                      momentum=0.9, weight_decay=5e-4)
+optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, 200, 0.00001)
 
 def train(epoch):

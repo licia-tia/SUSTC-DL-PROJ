@@ -9,18 +9,21 @@ import numpy as np
 
 
 class SIIM_ISIC(torch.utils.data.Dataset):
-    def __init__(self, data_root='/home/group3/DataSet', train=True, transform=None):
+    def __init__(self, data_root='/home/group3/DataSet/', csv_file=None, img_folder=None, type='train', transform=None):
 
-        self.data_root = data_root
-        self.train = train
         self.transform = transform
 
-        if train:
+        if type == 'train':
             self.df = pd.read_csv(os.path.join(data_root, 'training_set.csv'))
             self.imageFolder = os.path.join(data_root, 'Training_set')
-        else:
+
+        if type == 'validate':
             self.df = pd.read_csv(os.path.join(data_root, 'validation_set.csv'))
             self.imageFolder = os.path.join(data_root, 'Validation_set')
+
+        if type == 'test':
+            self.df = pd.read_csv(os.path.join(data_root, csv_file))
+            self.imageFolder = os.path.join(data_root, img_folder)
 
         self.df['sex'].fillna('unknown', inplace=True)
         self.df['age_approx'].fillna(-1, inplace=True)
@@ -74,10 +77,8 @@ class Cutout(object):
         img *= mask
         return img
 
-#todo: hair augment / microscope crop https://www.kaggle.com/nroman/melanoma-pytorch-starter-efficientnet
 
 def get_data_transforms(cutout=True, cutout_length=16, size=224):
-
     mean = [0.7591, 0.5805, 0.5414]
     std = [0.0963, 0.1109, 0.1202]
     train_transform = transforms.Compose([
