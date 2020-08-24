@@ -1,4 +1,5 @@
 import os
+import random
 
 import torch
 import torchvision.transforms as transforms
@@ -7,17 +8,23 @@ from PIL import Image
 
 import numpy as np
 
+import cv2
+
 
 class SIIM_ISIC(torch.utils.data.Dataset):
-    def __init__(self, data_root='/home/group3/DataSet', train=True, transform=None):
+    def __init__(self, data_root='/home/group3/DataSet', train=True, test=False, transform=None):
 
         self.data_root = data_root
         self.train = train
+        self.test = test
         self.transform = transform
 
         if train:
             self.df = pd.read_csv(os.path.join(data_root, 'training_set.csv'))
             self.imageFolder = os.path.join(data_root, 'Training_set')
+        elif test:
+            self.df = pd.read_csv(os.path.join(data_root, 'test_set.csv'))
+            self.imageFolder = os.path.join(data_root, 'Test_set')
         else:
             self.df = pd.read_csv(os.path.join(data_root, 'validation_set.csv'))
             self.imageFolder = os.path.join(data_root, 'Validation_set')
@@ -34,7 +41,9 @@ class SIIM_ISIC(torch.utils.data.Dataset):
         if self.transform:
             image = self.transform(image)
 
-        target = self.df.iloc[idx]["target"]
+        if not (not self.train and self.test):
+            target = self.df.iloc[idx]["target"]
+
 
         sex = self.df.iloc[idx]["sex"]
         age_approx = self.df.iloc[idx]["age_approx"]
@@ -44,10 +53,10 @@ class SIIM_ISIC(torch.utils.data.Dataset):
             "age_approx": age_approx,
             "anatom_site_general_challenge": anatom_site_general_challenge,
         }
-        # return {"image": image,
-        #         "meta": meta,
-        #         "target": target}
-        return image, meta, target
+        if not (not self.train and self.test):
+            return image, meta, target
+        else:
+            return image, meta
 
     def __len__(self):
         return len(self.df)
@@ -75,6 +84,7 @@ class Cutout(object):
         return img
 
 #todo: hair augment / microscope crop https://www.kaggle.com/nroman/melanoma-pytorch-starter-efficientnet
+
 
 def get_data_transforms(cutout=True, cutout_length=16):
 
