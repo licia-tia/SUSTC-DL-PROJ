@@ -61,7 +61,7 @@ if __name__ == '__main__':
                         img_folder=args.img_folder, transform=transform_test)
     testloader = torch.utils.data.DataLoader(
         testset,
-        batch_size=4,
+        batch_size=1,
         num_workers=4,
         shuffle=False,
         pin_memory=True
@@ -110,6 +110,9 @@ if __name__ == '__main__':
             _, predicted = outputs.max(1)
             total += targets.size(0)
             correct += predicted.eq(targets).sum().item()
+
+            if predicted.eq(targets).sum().item() == 0:
+                print('One misclassified sample: ' + str(batch_idx))
 
             progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
                          % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
