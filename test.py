@@ -19,6 +19,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_root', default='/home/group3/DataSet', type=str, help='data root path')
     parser.add_argument('--csv', default='validation_set.csv', type=str, help='csv file name')
     parser.add_argument('--img_folder', default='Validation_set', type=str, help='image folder name')
+    parser.add_argument('--model', default='single', type=str, help='single or ensemble')
     args = parser.parse_args()
     print('Data root:', args.data_root)
     print('CSV file:', args.csv)
@@ -60,63 +61,73 @@ if __name__ == '__main__':
                         img_folder=args.img_folder, transform=transform_test)
     testloader = torch.utils.data.DataLoader(
         testset,
-        # batch_size=1,
-        batch_size=4,
+        batch_size=1,
+        # batch_size=4,
         num_workers=4,
         shuffle=False,
         pin_memory=True
     )
 
-    misclassified = []
-
     device = 'cpu'
     test_loss = 0
     correct = 0
     total = 0
-    with torch.no_grad():
-        for batch_idx, (inputs, meta, targets) in enumerate(testloader):
-            inputs, targets = inputs.to(device), targets.to(device=device, dtype=torch.int64)
-            outputs = None
-            for net in ensemble_model:
-                if net == 'cnn':
-                    net = ensemble_model[net]
-                    net.eval()
-                    for s in range(len(meta['sex'])):
-                        meta['sex'][s] = sex[meta['sex'][s]]
-                    meta['sex'] = torch.tensor(meta['sex']).unsqueeze(0)
-                    meta['sex'] = torch.transpose(meta['sex'], 0, 1)
-                    meta['age_approx'] = torch.tensor(meta['age_approx']).unsqueeze(0)
-                    meta['age_approx'] = torch.transpose(meta['age_approx'], 0, 1)
-                    for a in range(len(meta['anatom_site_general_challenge'])):
-                        meta['anatom_site_general_challenge'][a] = anatom[
-                            meta['anatom_site_general_challenge'][a]]
-                    meta['anatom_site_general_challenge'] = torch.tensor(meta['anatom_site_general_challenge'])
-                    # pdb.set_trace()
-                    meta = torch.cat((meta['sex'], meta['age_approx'], meta['anatom_site_general_challenge']),
-                                     1)
-                    meta = meta.to(device)
-                    if outputs is None:
-                        outputs = net(inputs, meta)
+
+    if args.model == 'ensemble':
+        with torch.no_grad():
+            for batch_idx, (inputs, meta, targets) in enumerate(testloader):
+                inputs, targets = inputs.to(device), targets.to(device=device, dtype=torch.int64)
+                outputs = None
+                for net in ensemble_model:
+                    if net == 'cnn':
+                        net = ensemble_model[net]
+                        net.eval()
+                        for s in range(len(meta['sex'])):
+                            meta['sex'][s] = sex[meta['sex'][s]]
+                        meta['sex'] = torch.tensor(meta['sex']).unsqueeze(0)
+                        meta['sex'] = torch.transpose(meta['sex'], 0, 1)
+                        meta['age_approx'] = torch.tensor(meta['age_approx']).unsqueeze(0)
+                        meta['age_approx'] = torch.transpose(meta['age_approx'], 0, 1)
+                        for a in range(len(meta['anatom_site_general_challenge'])):
+                            meta['anatom_site_general_challenge'][a] = anatom[
+                                meta['anatom_site_general_challenge'][a]]
+                        meta['anatom_site_general_challenge'] = torch.tensor(meta['anatom_site_general_challenge'])
+                        # pdb.set_trace()
+                        meta = torch.cat((meta['sex'], meta['age_approx'], meta['anatom_site_general_challenge']),
+                                         1)
+                        meta = meta.to(device)
+                        if outputs is None:
+                            outputs = net(inputs, meta)
+                        else:
+                            outputs += net(inputs, meta)
                     else:
-                        outputs += net(inputs, meta)
-                else:
-                    net = ensemble_model[net]
-                    net.eval()
-                    sm = nn.Softmax(dim=1)
-                    if outputs is None:
-                        outputs = sm(net(inputs))
-                    else:
-                        outputs += sm(net(inputs))
-            loss = criterion(outputs, targets)
-            test_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
+                        net = ensemble_model[net]
+                        net.eval()
+                        sm = nn.Softmax(dim=1)
+                        if outputs is None:
+                            outputs = sm(net(inputs))
+                        else:
+                            outputs += sm(net(inputs))
+                loss = criterion(outputs, targets)
+                test_loss += loss.item()
+                _, predicted = outputs.max(1)
+                total += targets.size(0)
+                correct += predicted.eq(targets).sum().item()
 
-            # if predicted.eq(targets).sum().item() == 0:
-            #     misclassified.append(batch_idx)
+                progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                             % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
+    else:
+        net = ensemble_model['eff1']
+        net.eval()
+        with torch.no_grad():
+            for batch_idx, (inputs, meta, targets) in enumerate(testloader):
+                inputs, targets = inputs.to(device), targets.to(device=device, dtype=torch.int64)
+                outputs = net(inputs)
+                loss = criterion(outputs, targets)
+                test_loss += loss.item()
+                _, predicted = outputs.max(1)
+                total += targets.size(0)
+                correct += predicted.eq(targets).sum().item()
 
-            progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                         % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
-
-    print(misclassified)
+                progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
+                             % (test_loss / (batch_idx + 1), 100. * correct / total, correct, total))
