@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(description='CS324 Final')
 parser.add_argument('--lr', default=0.01, type=float, help='learning rate')
 args = parser.parse_args()
 
-device = 'cuda:3' if torch.cuda.is_available() else 'cpu'
+device = 'cuda:2' if torch.cuda.is_available() else 'cpu'
 best_acc = 0
 start_epoch = 0
 

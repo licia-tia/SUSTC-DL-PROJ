@@ -21,7 +21,7 @@ if __name__ == '__main__':
     parser.add_argument('--csv', default='test_set.csv', type=str, help='csv file name')
     parser.add_argument('--img_folder', default='Test_set', type=str, help='image folder name')
     parser.add_argument('--target', default='test', type=str, help='run test or validation')
-    parser.add_argument('--model', default='single', type=str, help='single or ensemble')
+    parser.add_argument('--model', default='ensemble', type=str, help='single or ensemble')
     args = parser.parse_args()
     print('Data root:', args.data_root)
     print('CSV file:', args.csv)
