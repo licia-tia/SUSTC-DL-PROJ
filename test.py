@@ -51,12 +51,19 @@ if __name__ == '__main__':
     ensemble_model['cnn'] = net
     print('Load cnn with acc =', checkpoint['acc'])
 
+    # googlenet
+    net = GoogLeNet()
+    checkpoint = torch.load('./checkpoint/googlenet.pth', map_location='cpu')
+    net.load_state_dict(checkpoint['net'])
+    ensemble_model['googlenet'] = net
+    print('Load googlenet with acc =', checkpoint['acc'])
+
     # densenet
-    # net = DenseNet201()
-    # checkpoint = torch.load('./checkpoint/densenet.pth', map_location='cpu')
-    # net.load_state_dict(checkpoint['net'])
-    # ensemble_model['dense'] = net
-    # print('Load densenet with acc =', checkpoint['acc'])
+    net = DenseNet201()
+    checkpoint = torch.load('./checkpoint/densenet.pth', map_location='cpu')
+    net.load_state_dict(checkpoint['net'])
+    ensemble_model['dense'] = net
+    print('Load densenet with acc =', checkpoint['acc'])
 
     transform_train, transform_test = get_data_transforms(size=224)
     testset = SIIM_ISIC(type='test', data_root=args.data_root, csv_file=args.csv,
