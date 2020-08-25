@@ -147,17 +147,9 @@ if __name__ == '__main__':
                 else:
                     predict.extend(predicted.numpy())
     read_file = '/home/group3/Test/test_set.csv'
-    output_file = './test.csv'
+    output_file = './../test.csv'
     rows = []
     targets = predict
-    cnt = 0
-    for i in range(117):
-        if targets[i] != 0:
-           cnt += 1
-    for i in range(117):
-        if targets[117 + i] != 1:
-           cnt += 1
-    print((234-cnt)/234.0)
     with open(read_file, 'r') as rfile:
         csvreader = csv.reader(rfile)
         fields = next(csvreader)
