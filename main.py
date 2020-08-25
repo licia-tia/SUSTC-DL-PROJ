@@ -15,7 +15,7 @@ device = 'cuda:3' if torch.cuda.is_available() else 'cpu'
 best_acc = 0
 start_epoch = 0
 
-
+print('Data preprocessing...')
 transform_train, transform_test = get_data_transforms(size=224)
 
 trainset = SIIM_ISIC(transform=transform_train)
@@ -36,6 +36,7 @@ testloader = torch.utils.data.DataLoader(
         pin_memory=True
     )
 
+print('Model initializing...')
 net = EfficientNetB0()
 net = net.to(device)
 cudnn.benchmark = True

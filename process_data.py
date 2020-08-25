@@ -12,6 +12,7 @@ class SIIM_ISIC(torch.utils.data.Dataset):
     def __init__(self, data_root='/home/group3/DataSet/', csv_file=None, img_folder=None, type='train', transform=None):
 
         self.transform = transform
+        self.type = type
 
         if type == 'train':
             self.df = pd.read_csv(os.path.join(data_root, 'training_set.csv'))
@@ -37,7 +38,9 @@ class SIIM_ISIC(torch.utils.data.Dataset):
         if self.transform:
             image = self.transform(image)
 
-        target = self.df.iloc[idx]["target"]
+        target = []
+        if self.type != 'test':
+            target = self.df.iloc[idx]["target"]
 
         sex = self.df.iloc[idx]["sex"]
         age_approx = self.df.iloc[idx]["age_approx"]

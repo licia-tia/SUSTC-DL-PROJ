@@ -3,8 +3,8 @@ import torch
 from torch import nn
 from torchvision import models
 
-hidden = '20 20 10'
-device = 'cuda:3' if torch.cuda.is_available() else 'cpu'
+hidden = '20'
+device = 'cuda:2' if torch.cuda.is_available() else 'cpu'
 
 class Net(nn.Module):
     def __init__(self, input_dim, output_dim=2, meta_dim=3, hidden_layer=hidden):

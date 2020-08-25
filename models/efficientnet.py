@@ -1,18 +1,19 @@
-"""EfficientNet in PyTorch.
-
+"""
+Author: 朱以辰 11711512
 Paper: "EfficientNet: Rethinking Model Scaling for Convolutional Neural Networks".
-
 Reference: https://github.com/keras-team/keras-applications/blob/master/keras_applications/efficientnet.py
+            https://github.com/kuangliu/pytorch-cifar/blob/master/models/efficientnet.py
 """
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
+# Swish layer
 def swish(x):
     return x * x.sigmoid()
 
 
+# dropout
 def drop_connect(x, drop_ratio):
     keep_ratio = 1.0 - drop_ratio
     mask = torch.empty([x.shape[0], 1, 1, 1], dtype=x.dtype, device=x.device)
@@ -23,7 +24,7 @@ def drop_connect(x, drop_ratio):
 
 
 class SE(nn.Module):
-    """Squeeze-and-Excitation block with Swish."""
+    '''Squeeze-and-Excitation block with Swish.'''
 
     def __init__(self, in_channels, se_channels):
         super(SE, self).__init__()
@@ -41,7 +42,7 @@ class SE(nn.Module):
 
 
 class Block(nn.Module):
-    """expansion + depthwise + pointwise + squeeze-excitation"""
+    '''expansion + depthwise + pointwise + squeeze-excitation'''
 
     def __init__(self,
                  in_channels,
