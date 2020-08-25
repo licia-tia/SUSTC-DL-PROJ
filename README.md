@@ -25,10 +25,18 @@
 - utils.py
 
 # How to run
+Log in 10.20.107.171 by group3 account:  
+Username: group3  
+Password: cs324group3  
+
 We suggest you use the base conda environment (conda location: /home/group3/anaconda3/bin/conda)  
-Or otherwise:   
+
+Or otherwise:  
+
 conda create --name xxenv --file requirements.txt  
-NOTE: some package might not exist in default channels, so you might have to add channels manually or use  
+
+NOTE: some packages might not exist in default channels, so you might have to add channels manually or use 
+
 anaconda search -t conda XXpackage_name to install.
 
 ## Train
