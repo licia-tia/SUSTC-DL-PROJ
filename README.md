@@ -41,5 +41,7 @@ parameters(optional):
 --target (str, 'test' for no target or otherwise for dataset with target, default='test')  
 --model (str, 'single' to use the best single model and 'ensemble' to use the ensemble model, default='ensemble')
 
-### Note: for ensemble model, it takes a long time to run
+### Note: 
+1. Just to use default parameters is OK
+2. For the ensemble model, it takes a long time to run
 
