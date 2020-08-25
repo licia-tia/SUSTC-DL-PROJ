@@ -25,7 +25,11 @@
 - utils.py
 
 # How to run
-pip install -r requirements.txt  
+We suggest you use the base conda environment (conda location: /home/group3/anaconda3/bin/conda)  
+Or otherwise:   
+conda create --name xxenv --file requirements.txt  
+NOTE: some package might not exist in default channels, so you might have to add channels manually or use  
+anaconda search -t conda XXpackage_name to install.
 
 ## Train
 python main.py  
