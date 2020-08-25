@@ -1,3 +1,6 @@
+'''
+Author: All group members
+'''
 import torch.optim as optim
 from process_data import get_data_transforms, SIIM_ISIC
 import torch.backends.cudnn as cudnn
